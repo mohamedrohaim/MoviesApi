@@ -1,0 +1,11 @@
+F:\DotNetProjects\MoviesApi\MoviesApi\obj\Release\net6.0\PubTmp\Out\MoviesApi.exe
+F:\DotNetProjects\MoviesApi\MoviesApi\obj\Release\net6.0\PubTmp\Out\appsettings.Development.json
+F:\DotNetProjects\MoviesApi\MoviesApi\obj\Release\net6.0\PubTmp\Out\appsettings.json
+F:\DotNetProjects\MoviesApi\MoviesApi\obj\Release\net6.0\PubTmp\Out\MoviesApi.dll
+F:\DotNetProjects\MoviesApi\MoviesApi\obj\Release\net6.0\PubTmp\Out\MoviesApi.deps.json
+F:\DotNetProjects\MoviesApi\MoviesApi\obj\Release\net6.0\PubTmp\Out\MoviesApi.runtimeconfig.json
+F:\DotNetProjects\MoviesApi\MoviesApi\obj\Release\net6.0\PubTmp\Out\MoviesApi.pdb
+F:\DotNetProjects\MoviesApi\MoviesApi\obj\Release\net6.0\PubTmp\Out\Microsoft.OpenApi.dll
+F:\DotNetProjects\MoviesApi\MoviesApi\obj\Release\net6.0\PubTmp\Out\Swashbuckle.AspNetCore.Swagger.dll
+F:\DotNetProjects\MoviesApi\MoviesApi\obj\Release\net6.0\PubTmp\Out\Swashbuckle.AspNetCore.SwaggerGen.dll
+F:\DotNetProjects\MoviesApi\MoviesApi\obj\Release\net6.0\PubTmp\Out\Swashbuckle.AspNetCore.SwaggerUI.dll
