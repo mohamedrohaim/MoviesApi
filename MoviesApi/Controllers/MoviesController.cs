@@ -48,6 +48,17 @@ namespace MoviesApi.Controllers
             return Ok(new { stauts = stauts[0], movie=mappedMovie });
         }
 
+        [HttpGet("GetMoviesByGenreId")]
+        public async Task<IActionResult> GetMoviesByGenreId(byte id)
+        {
+            var movieS = await _context.Movies
+                .Where(g => g.GenreId == id)
+                .OrderBy(g=>g.Rate)
+                .Include(g => g.Genre)
+                .ToListAsync();
+            var mappedMovie = mappingMovieToMovieDetaisl(movieS);
+            return Ok(new { stauts = stauts[0], movies = mappedMovie });
+        }
 
 
 
@@ -56,6 +67,8 @@ namespace MoviesApi.Controllers
         {
             if (!await isValidGenre(dto.GenreId))
                 return BadRequest(new { stauts = stauts[1], message = "Genre not found" });
+            if(dto.Poster==null)
+                return BadRequest(new { stauts = stauts[1], message = "Poster is required" });
             if (!checkExtention(dto.Poster))
             {
                 return BadRequest(new { stauts = stauts[1], message = "only .png and jpg are allowed" });
@@ -69,7 +82,7 @@ namespace MoviesApi.Controllers
                 StoreLine = dto.StoreLine,
                 Year = dto.Year,
                 GenreId = dto.GenreId,
-                Poster = await GetByteArrayFromStreamAsync(dto.Poster),
+                Poster =  GetByteArrayFromStreamAsync(dto.Poster),
 
             };
             try
@@ -86,14 +99,54 @@ namespace MoviesApi.Controllers
 
 
         }
+        [HttpDelete(template:"{id}")]
+        public async Task<IActionResult> DeleteMovieAsync(int id) { 
+            var movie=_context.Movies.FirstOrDefault(x => x.Id == id);
+            if (movie == null)
+                return NotFound(new { stauts = stauts[1], message = $"Not Found Movie with id {id}" });
+
+            try
+            {
+                _context.Remove(movie);
+                _context.SaveChanges();
+                return Ok(new { stauts = stauts[0], message = "Deleted Successfully" });
+            }catch(Exception ex)
+            {
+                return BadRequest(new { stauts = stauts[0], message = ex.Message });
+            }
+            }
+        [HttpPut(template:"{id}")]
+        public async Task<IActionResult> updateMovie(int id, [FromForm] MovieDto movieDto) {
+            var movie=await _context.Movies.FirstOrDefaultAsync(x => x.Id == id);
+            if(movie==null)
+                return NotFound(new { stauts = stauts[1], message = $"Not Found Movie with id {id}" });
+            (bool isValid, string message) =await ValidateGenreAndPoster(movieDto);
+            if (!isValid)
+                return BadRequest(new { stauts = stauts[1] ,message=message });
+            
+            movie.Title = movieDto.Title;
+            movie.Year = movieDto.Year;
+            movie.StoreLine=movieDto.StoreLine;
+            movie.Rate= movieDto.Rate;
+            movie.GenreId = movieDto.GenreId;
+            if (movieDto.Poster != null) {
+                movie.Poster = GetByteArrayFromStreamAsync(movieDto.Poster);
+            }
+            try { 
+                _context.Update(movie);
+                _context.SaveChanges();
+                return Ok(new { stauts = stauts[0],message="Movie Updated Successfulley",movie });
+            }catch(Exception ex) { return BadRequest(new { stauts = stauts[1],message=ex.Message }); }
 
 
+        }
 
-        public static async Task<byte[]> GetByteArrayFromStreamAsync(IFormFile file)
+
+        private  byte[] GetByteArrayFromStreamAsync(IFormFile file)
         {
             using (var dataStream = new MemoryStream())
             {
-                await file.CopyToAsync(dataStream);
+                 file.CopyToAsync(dataStream);
                 return dataStream.ToArray();
             }
         }
@@ -138,5 +191,22 @@ namespace MoviesApi.Controllers
             return movieDetails;
             
         }
+
+
+        private async Task<(bool, string)> ValidateGenreAndPoster(MovieDto dto)
+        {
+            if (! await isValidGenre(dto.GenreId))
+                return (false, "Genre not found");
+            if(dto.Poster != null) { 
+                if (!checkExtention(dto.Poster))
+                return (false, "Only .png and .jpg extensions are allowed");
+
+            if (dto.Poster.Length > _maxPosterSize)
+                return (false, "Max photo size is 1 MB");
+            }
+
+            return (true, "Validation successful");
+        }
+
     }
 }
