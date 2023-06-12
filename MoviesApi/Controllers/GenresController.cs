@@ -54,7 +54,7 @@ namespace MoviesApi.Controllers
             }
             genre.Name = genreDto.Name;
             _context.SaveChanges();
-            return Ok(new {status="success" ,genre});
+            return Ok(new {status="success",genre});
             
         }
 
