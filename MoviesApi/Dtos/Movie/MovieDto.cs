@@ -1,7 +1,7 @@
 ﻿using MoviesApi.Models;
 using System.ComponentModel.DataAnnotations;
 
-namespace MoviesApi.Dtos.Genres
+namespace MoviesApi.Dtos.Movie
 {
     public class MovieDto
     {
