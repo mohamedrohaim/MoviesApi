@@ -12,7 +12,7 @@ namespace MoviesApi.Servises
 
             _context = context;
         }
-        public new async Task<IEnumerable> GetAllAsync()
+        public new async Task<IEnumerable<Movie>> GetAllAsync()
         {
             var movies = await _context.Movies
                    .OrderByDescending(x => x.Rate)
@@ -21,12 +21,12 @@ namespace MoviesApi.Servises
             return movies;
 
         }
-        public new async Task<Movie> GetByIdAsync()
+        public new async Task<Movie> GetByIdAsync(int id)
                            => await _context.Movies
-                           .Include(g => g.Genre).FirstOrDefaultAsync();
+                           .Include(g => g.Genre).Where(g=>g.Id==id).FirstOrDefaultAsync();
 
 
-        public async Task<IEnumerable<Movie>>GetMoviesByGenreId(byte id)
+        public async Task<IEnumerable<Movie>> GetMoviesByGenreIdAsync(byte id)
         {
             var movies = await _context.Movies
                 .Where(g => g.GenreId == id)

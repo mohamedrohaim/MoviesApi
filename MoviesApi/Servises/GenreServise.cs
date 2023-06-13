@@ -16,7 +16,7 @@ namespace MoviesApi.Servises
             return await _context.SaveChangesAsync();
         
         }
-        public new async Task<Genre> GetByIdAsync(byte id)
+        public new  async Task<Genre> GetByIdAsync(byte id)
             => await _context.Genres.FindAsync(id);
 
 

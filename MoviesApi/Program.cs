@@ -12,6 +12,7 @@ namespace MoviesApi
             var builder = WebApplication.CreateBuilder(args);
             var connctionString = builder.Configuration.GetConnectionString("DefaultConnection");
             builder.Services.AddScoped<GenreServise, GenreServise>();
+            builder.Services.AddScoped<MovieServise, MovieServise>();
             builder.Services.AddDbContext<ApplicationDBContext>(options=>
             options.UseSqlServer(connctionString)
             );

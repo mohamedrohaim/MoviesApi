@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration.EnvironmentVariables;
 using Microsoft.VisualBasic;
 using MoviesApi.Dtos.Movie;
 using MoviesApi.Models;
+using MoviesApi.Servises;
 
 namespace MoviesApi.Controllers
 {
@@ -20,28 +21,25 @@ namespace MoviesApi.Controllers
 
         private List<string> _allowedExtentions = new List<string> { ".jpg", ".png" };
         private long _maxPosterSize = 1048576;
-        private readonly ApplicationDBContext _context;
-        public MoviesController(ApplicationDBContext context)
+        private readonly MovieServise _servise;
+        public MoviesController(MovieServise servise)
         {
-            _context = context;
+            _servise = servise;
         }
 
 
         [HttpGet]
         public async Task<IActionResult> GetAllMovies()
         {
-            var movies = await _context.Movies
-                   .OrderByDescending(x => x.Rate)
-                   .Include(g => g.Genre)
-                   .ToListAsync();
-            
+            var movies =await _servise.GetAllAsync();
+          
             var mappedMovies = mappingMovieToMovieDetaisl(movies);
             return Ok(new { stauts = stauts[0], movies=mappedMovies });
         }
         [HttpGet(template:"{id}")]
         public async Task<IActionResult> GetMovie(int id)
         {
-            var movie = await _context.Movies.Include(g => g.Genre).FirstOrDefaultAsync(m => m.Id == id);
+            var movie = await _servise.GetByIdAsync(id);
             if (movie == null)
                 return NotFound(new { stauts = stauts[1], message = "Movie Not Found" });
             var mappedMovie= mappingMovie(movie);
@@ -51,11 +49,7 @@ namespace MoviesApi.Controllers
         [HttpGet("GetMoviesByGenreId")]
         public async Task<IActionResult> GetMoviesByGenreId(byte id)
         {
-            var movieS = await _context.Movies
-                .Where(g => g.GenreId == id)
-                .OrderBy(g=>g.Rate)
-                .Include(g => g.Genre)
-                .ToListAsync();
+            var movieS = await _servise.GetMoviesByGenreIdAsync(id);
             var mappedMovie = mappingMovieToMovieDetaisl(movieS);
             return Ok(new { stauts = stauts[0], movies = mappedMovie });
         }
@@ -65,8 +59,8 @@ namespace MoviesApi.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateAsync([FromForm] MovieDto dto)
         {
-            if (!await isValidGenre(dto.GenreId))
-                return BadRequest(new { stauts = stauts[1], message = "Genre not found" });
+           /* if (!await isValidGenre(dto.GenreId))
+                return BadRequest(new { stauts = stauts[1], message = "Genre not found" });*/
             if(dto.Poster==null)
                 return BadRequest(new { stauts = stauts[1], message = "Poster is required" });
             if (!checkExtention(dto.Poster))
@@ -87,8 +81,7 @@ namespace MoviesApi.Controllers
             };
             try
             {
-                await _context.AddAsync(movie);
-                _context.SaveChanges();
+                await _servise.UpdateAsync(movie);
                 return Ok(new { status = stauts[0], movie });
             }
             catch (Exception ex)
@@ -101,14 +94,13 @@ namespace MoviesApi.Controllers
         }
         [HttpDelete(template:"{id}")]
         public async Task<IActionResult> DeleteMovieAsync(int id) { 
-            var movie=_context.Movies.FirstOrDefault(x => x.Id == id);
+            var movie=await _servise.GetByIdAsync(id);
             if (movie == null)
                 return NotFound(new { stauts = stauts[1], message = $"Not Found Movie with id {id}" });
 
             try
             {
-                _context.Remove(movie);
-                _context.SaveChanges();
+                await _servise.DeleteAsync(movie);
                 return Ok(new { stauts = stauts[0], message = "Deleted Successfully" });
             }catch(Exception ex)
             {
@@ -117,7 +109,7 @@ namespace MoviesApi.Controllers
             }
         [HttpPut(template:"{id}")]
         public async Task<IActionResult> updateMovie(int id, [FromForm] MovieDto movieDto) {
-            var movie=await _context.Movies.FirstOrDefaultAsync(x => x.Id == id);
+            var movie=await _servise.GetByIdAsync(id);
             if(movie==null)
                 return NotFound(new { stauts = stauts[1], message = $"Not Found Movie with id {id}" });
             (bool isValid, string message) =await ValidateGenreAndPoster(movieDto);
@@ -133,8 +125,7 @@ namespace MoviesApi.Controllers
                 movie.Poster = GetByteArrayFromStreamAsync(movieDto.Poster);
             }
             try { 
-                _context.Update(movie);
-                _context.SaveChanges();
+                _servise.UpdateAsync(movie);
                 return Ok(new { stauts = stauts[0],message="Movie Updated Successfulley",movie });
             }catch(Exception ex) { return BadRequest(new { stauts = stauts[1],message=ex.Message }); }
 
@@ -161,10 +152,10 @@ namespace MoviesApi.Controllers
             return _allowedExtentions.Contains(Path.GetExtension(file.FileName.ToLower()));
 
         }
-        private async Task<bool> isValidGenre(byte id)
-            => await _context.Genres.AnyAsync(g => g.Id == id);
+      /*  private async Task<bool> isValidGenre(byte id)
+            => await _context.Genres.AnyAsync(g => g.Id == id);*/
 
-        private List<MovieDetails> mappingMovieToMovieDetaisl(List<Movie> movies)
+        private List<MovieDetails> mappingMovieToMovieDetaisl(IEnumerable<Movie> movies)
         {
             var movieDetails = new MovieDetails();
             List<MovieDetails> moviesDetails = new List<MovieDetails>();
@@ -195,8 +186,8 @@ namespace MoviesApi.Controllers
 
         private async Task<(bool, string)> ValidateGenreAndPoster(MovieDto dto)
         {
-            if (! await isValidGenre(dto.GenreId))
-                return (false, "Genre not found");
+           /* if (! await isValidGenre(dto.GenreId))
+                return (false, "Genre not found");*/
             if(dto.Poster != null) { 
                 if (!checkExtention(dto.Poster))
                 return (false, "Only .png and .jpg extensions are allowed");

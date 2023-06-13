@@ -29,7 +29,13 @@ namespace MoviesApi.Controllers
             return Ok(genres);
 
         }
-
+        [HttpGet(template:"{id}")]
+        public async Task<IActionResult> GetAllAsyncById(int id) { 
+        var movie= await _servise.GetByIdAsync(id);
+            if(movie==null)
+                return NotFound(new { status="fauled",message=$"No Movie with id {id}"});
+            return Ok(movie);
+        }
         [HttpPost]
         public async Task<IActionResult> CreateAsync(CreateGenreDto genreDto)
         {
@@ -40,7 +46,8 @@ namespace MoviesApi.Controllers
             int status=await _servise.CreateAsync(genre);
             if (status > 0)
             {
-                return Ok(genre);
+                var genreData=_servise.GetByIdAsync(genre.Id);
+                return Ok(genreData);
             }
             return BadRequest(new { status = "failed", message="failed to create Genre"});
             
@@ -62,7 +69,9 @@ namespace MoviesApi.Controllers
             int status=await _servise.UpdateAsync(genre);
             if (status > 0)
             {
-               return Ok(new {status="success",genre});
+                var genreData = _servise.GetByIdAsync(genre.Id);
+             
+                return Ok(new {status="success",genreData});
             }
             return BadRequest(new { status = "failed", message = "failed to update Genre" });
 
@@ -78,9 +87,10 @@ namespace MoviesApi.Controllers
             }
            int status= await _servise.DeleteAsync(genre); 
             if (status > 0)
-                 return Ok();
+                 return Ok(new { status = "Success", message = "Genre Deleted Successfully" });
             return BadRequest(new { status = "failed", message = "failed to Delete Genre" });
         }
+
 
 
     }
