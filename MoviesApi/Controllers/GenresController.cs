@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MoviesApi.Dtos.Genres;
 using MoviesApi.Models;
+using MoviesApi.Servises;
 
 namespace MoviesApi.Controllers
 {
@@ -10,11 +11,11 @@ namespace MoviesApi.Controllers
     [ApiController]
     public class GenresController : ControllerBase
     {
-        private readonly ApplicationDBContext _context;
 
-        public GenresController(ApplicationDBContext context)
+        private readonly GenreServise _servise;
+        public GenresController(GenreServise servise)
         {
-            _context = context;
+            _servise = servise;
 
         }
 
@@ -24,7 +25,7 @@ namespace MoviesApi.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAllAsync()
         {
-            var genres = await _context.Genres.OrderBy(m => m.Name).ToListAsync();
+            var genres = await _servise.GetAllAsync();
             return Ok(genres);
 
         }
@@ -36,40 +37,49 @@ namespace MoviesApi.Controllers
                 Name = genreDto.Name,
             };
 
-            await _context.AddAsync(genre);
-            _context.SaveChanges();
+            int status=await _servise.CreateAsync(genre);
+            if (status > 0)
+            {
+                return Ok(genre);
+            }
+            return BadRequest(new { status = "failed", message="failed to create Genre"});
+            
 
 
-            return Ok(genre);
+            
 
         }
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateAsync(int id,[FromBody] CreateGenreDto genreDto) {
-            var genre = await _context.Genres.SingleOrDefaultAsync(g => g.Id == id);
+        public async Task<IActionResult> UpdateAsync(byte id,[FromBody] CreateGenreDto genreDto) {
+            var genre = await _servise.GetByIdAsync(id);
             if (genre == null) {
                 var message = new { status = "failed" ,
                     
-                message=$"client error مليش فيه مش شغلتي  " };
+                message=$"genre not found" };
             return NotFound (message);
             }
             genre.Name = genreDto.Name;
-            _context.SaveChanges();
-            return Ok(new {status="success",genre});
-            
+            int status=await _servise.UpdateAsync(genre);
+            if (status > 0)
+            {
+               return Ok(new {status="success",genre});
+            }
+            return BadRequest(new { status = "failed", message = "failed to update Genre" });
+
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteAsync(int id)
+        public async Task<IActionResult> DeleteAsync(byte id)
         {
-            var genre = await _context.Genres.SingleOrDefaultAsync(g => g.Id == id);
+            var genre = await _servise.GetByIdAsync(id);
             if (genre == null)
             {
                 return NotFound(value: $"No genre was found with ID :{id}");
             }
-            _context.Genres.Remove(genre);
-            _context.SaveChanges();
-            return Ok();
-
+           int status= await _servise.DeleteAsync(genre); 
+            if (status > 0)
+                 return Ok();
+            return BadRequest(new { status = "failed", message = "failed to Delete Genre" });
         }
 
 
